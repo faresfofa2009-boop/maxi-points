@@ -1,0 +1,750 @@
+<html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متتبع القدرات الذكي | MAXI Points</title>
+    <!-- تضمين Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* خط Tajawal للغة العربية */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .progress-ring {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .spend-btn-full {
+            background-color: #10b981; /* Green 500 */
+            transition: all 0.3s ease;
+        }
+        .spend-btn-full:hover:not(:disabled) {
+            background-color: #059669; /* Green 600 */
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+        }
+        .spend-btn-full:disabled {
+            background: #374151; /* Gray 700 */
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .spend-btn-partial {
+            background-color: #f59e0b; /* Yellow 600 */
+            transition: all 0.3s ease;
+            color: white; 
+        }
+        .spend-btn-partial:hover:not(:disabled) {
+            background-color: #d97706; /* Yellow 700 */
+        }
+        .spend-btn-partial:disabled {
+            background: #9ca3af; /* Gray 400 */
+            opacity: 0.7;
+            color: #4b5563;
+            cursor: not-allowed;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-brain text-blue-600 text-2xl"></i>
+                <h1 class="text-xl font-bold text-gray-800">متتبع القدرات <span class="text-blue-600">MAXI</span></h1>
+            </div>
+            <div class="flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full">
+                <i class="fas fa-fire text-orange-500"></i>
+                <span id="streakDisplay" class="font-bold text-blue-800">0 يوم</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        
+        <!-- Loading Placeholder (Minimal in Local Storage Version) -->
+        <div id="loadingIndicator" class="text-center py-1 hidden">
+            <i class="fas fa-spinner fa-spin text-blue-600 text-3xl"></i>
+            <p class="text-gray-600 mt-3">جاري تحميل البيانات المحلية...</p>
+        </div>
+        
+        <!-- App Content -->
+        <div id="appContent" class="space-y-8">
+            <!-- MAXI Points Overview & Spend Section -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Maxi Balance & Spend Button -->
+                <div class="card p-6 md:col-span-2 bg-gradient-to-br from-slate-800 to-slate-900 text-white relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L2NpcmNsZT48L2Zzdmc+')]"></div>
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-slate-400 text-sm font-medium mb-1">الرصيد الإجمالي القابل للصرف</h2>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="totalMaxiPoints" class="text-5xl font-black text-green-400">0</span>
+                                    <span class="text-slate-400">بنك إضافي</span>
+                                </div>
+                            </div>
+                            <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                                <i class="fas fa-vault text-2xl text-green-400"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white/10 rounded-lg p-3 mt-4">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-slate-300">أيام راحة مكتسبة (لكل 9 بنوك):</span>
+                                <span id="restDaysEarned" class="font-bold text-white">0 يوم</span>
+                            </div>
+                            <div class="w-full bg-slate-700 rounded-full h-2">
+                                <div id="restProgress" class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">نهاية هذا الشريط تعني يوم راحة جاهز للصرف.</p>
+                        </div>
+
+                        <button id="spendButton" onclick="spendRestDay()" disabled class="spend-btn-full w-full py-3 rounded-xl text-white font-bold text-lg shadow-md mt-4 flex items-center justify-center gap-2">
+                            <i class="fas fa-bed"></i> صرف يوم راحة كامل (خصم 9 نقاط)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daily Goal Status -->
+                <div class="card p-6 flex flex-col justify-center items-center text-center">
+                    <h3 class="text-gray-500 font-medium mb-4">هدف اليوم (9 بنوك)</h3>
+                    <div class="relative w-32 h-32 mb-4">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle class="text-gray-100 stroke-current" stroke-width="8" cx="50" cy="50" r="40" fill="transparent"></circle>
+                            <circle id="dailyProgressRing" class="text-blue-600 progress-ring stroke-current" stroke-width="8" cx="50" cy="50" r="40" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                        </svg>
+                        <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center flex-col">
+                            <span id="dailyPercentage" class="text-2xl font-bold text-gray-800">0%</span>
+                        </div>
+                    </div>
+                    <p id="dailyStatusText" class="text-sm text-gray-600">أنجزت <span id="todayTotal" class="font-bold">0</span> من 9</p>
+                </div>
+            </div>
+
+            <!-- Separate MAXI Totals -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <!-- Total Quant MAXI -->
+                <div class="card p-5 border-t-4 border-blue-500 bg-blue-50">
+                    <p class="text-sm font-medium text-blue-700 mb-1 flex items-center gap-2"><i class="fas fa-chart-line"></i> الإجمالي (الكمي)</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="totalQuantMaxi" class="text-4xl font-black">0</span>
+                        <span class="text-blue-500 text-lg">نقطة</span>
+                    </div>
+                </div>
+                <!-- Total Verbal MAXI -->
+                <div class="card p-5 border-t-4 border-purple-500 bg-purple-50">
+                    <p class="text-sm font-medium text-purple-700 mb-1 flex items-center gap-2"><i class="fas fa-poll"></i> الإجمالي (اللفظي)</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="totalVerbalMaxi" class="text-4xl font-black">0</span>
+                        <span class="text-purple-500 text-lg">نقطة</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Daily Input Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <!-- Quant Input -->
+                <div class="card p-6 border-t-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-calculator text-blue-500 ml-2"></i>القسم الكمي</h3>
+                        <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded">الهدف: 4 بنوك</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-6">
+                        <button onclick="adjustCount('quant', -1)" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition flex items-center justify-center"><i class="fas fa-minus"></i></button>
+                        <span id="quantCount" class="text-4xl font-bold text-gray-800">0</span>
+                        <button onclick="adjustCount('quant', 1)" class="w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-3 text-center mb-4">
+                        <p class="text-sm text-gray-600">النقاط الإضافية لليوم (كمي):</p>
+                        <p id="quantMaxi" class="text-lg font-bold text-gray-400">0</p>
+                    </div>
+                    
+                    <!-- PARTIAL SPEND BUTTON for Quant -->
+                    <button id="spendQuantBtn" onclick="spendPartialDay('quant')" disabled class="spend-btn-partial w-full py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fas fa-umbrella-beach"></i> يوم راحة بدون كمي (خصم 4 نقاط من بنك الكمي)
+                    </button>
+                </div>
+
+                <!-- Verbal Input -->
+                <div class="card p-6 border-t-4 border-purple-500">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-book text-purple-500 ml-2"></i>القسم اللفظي</h3>
+                        <span class="text-xs font-bold bg-purple-100 text-purple-800 px-2 py-1 rounded">الهدف: 5 بنوك</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-6">
+                        <button onclick="adjustCount('verbal', -1)" class="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition flex items-center justify-center"><i class="fas fa-minus"></i></button>
+                        <span id="verbalCount" class="text-4xl font-bold text-gray-800">0</span>
+                        <button onclick="adjustCount('verbal', 1)" class="w-10 h-10 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-600 transition flex items-center justify-center"><i class="fas fa-plus"></i></button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-3 text-center mb-4">
+                        <p class="text-sm text-gray-600">النقاط الإضافية لليوم (لفظي):</p>
+                        <p id="verbalMaxi" class="text-lg font-bold text-gray-400">0</p>
+                    </div>
+                    
+                    <!-- PARTIAL SPEND BUTTON for Verbal -->
+                    <button id="spendVerbalBtn" onclick="spendPartialDay('verbal')" disabled class="spend-btn-partial w-full py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fas fa-umbrella-beach"></i> يوم راحة بدون لفظي (خصم 5 نقاط من بنك اللفظي)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <button id="saveButton" onclick="saveDay()" class="btn-primary w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle"></i> حفظ إنجاز اليوم
+            </button>
+            <p id="saveMessage" class="text-center text-sm text-red-500 font-medium"></p>
+
+
+            <!-- History Section -->
+            <div class="card p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">سجل الأيام السابقة</h3>
+                <div id="historyList" class="space-y-3 max-h-60 overflow-y-auto custom-scrollbar">
+                    <!-- History items will be injected here -->
+                    <p class="text-center text-gray-400 py-4">لا توجد سجلات سابقة</p>
+                </div>
+            </div>
+
+            <!-- Settings / Reset -->
+            <div class="text-center">
+                <button onclick="resetData()" class="text-red-400 text-sm hover:text-red-600 underline">تصفير جميع البيانات والبدء من جديد (محلي)</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuration
+        const STORAGE_KEY = 'maxiTrackerData';
+        const TARGETS = {
+            quant: 4,
+            verbal: 5
+        };
+        const DAILY_TOTAL_TARGET = TARGETS.quant + TARGETS.verbal;
+        const SAVE_BUTTON = document.getElementById('saveButton');
+        const SAVE_MESSAGE = document.getElementById('saveMessage');
+
+        // State (Default Structure)
+        let currentData = {
+            quant: 0,
+            verbal: 0
+        };
+
+        let appData = {
+            totalMaxiPoints: 0,
+            totalQuantMaxi: 0, 
+            totalVerbalMaxi: 0, 
+            history: [],
+            lastSavedDate: null, // YYYY-MM-DD
+            streak: 0,
+            lastStreakDate: null // YYYY-MM-DD
+        };
+
+
+        // --- Utility Functions ---
+
+        // Utility to format date as YYYY-MM-DD
+        function formatDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+        
+        // Custom Alert/Confirmation for sandbox environment
+        function customAlert(message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center">
+                    <p class="text-gray-800 mb-6 font-medium">${message}</p>
+                    <button id="alertClose" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition">إغلاق</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('alertClose').onclick = () => document.body.removeChild(modal);
+        }
+
+        function customConfirm(message, callback) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full text-center">
+                    <p class="text-gray-800 mb-6 font-medium">${message}</p>
+                    <div class="flex justify-around gap-4">
+                        <button id="confirmYes" class="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 transition">نعم</button>
+                        <button id="confirmNo" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg font-bold hover:bg-gray-300 transition">لا</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            document.getElementById('confirmYes').onclick = () => {
+                document.body.removeChild(modal);
+                callback(true);
+            };
+            document.getElementById('confirmNo').onclick = () => {
+                document.body.removeChild(modal);
+                callback(false);
+            };
+        }
+        
+        // --- Local Storage Functions ---
+
+        /**
+         * تحميل البيانات من التخزين المحلي للمتصفح (localStorage)
+         */
+        function loadAppDataFromLocalStorage() {
+            const dataString = localStorage.getItem(STORAGE_KEY);
+            if (dataString) {
+                try {
+                    const loadedData = JSON.parse(dataString);
+                    // دمج البيانات المحملة مع الافتراضيات لضمان وجود جميع الحقول
+                    appData = {
+                        ...appData,
+                        ...loadedData,
+                        // تأكد من أن الحقول أرقام أو مصفوفات إذا كانت مفقودة أو خالية
+                        totalMaxiPoints: Number(loadedData.totalMaxiPoints) || 0,
+                        totalQuantMaxi: Number(loadedData.totalQuantMaxi) || 0, 
+                        totalVerbalMaxi: Number(loadedData.totalVerbalMaxi) || 0,
+                        history: Array.isArray(loadedData.history) ? loadedData.history : [],
+                        streak: Number(loadedData.streak) || 0
+                    };
+                    console.log("Data loaded from LocalStorage:", appData);
+                } catch (e) {
+                    console.error("Error parsing data from LocalStorage:", e);
+                    // في حال الخطأ، استخدم البيانات الافتراضية
+                }
+            } else {
+                console.log("No data found in LocalStorage. Using default state.");
+            }
+        }
+
+        /**
+         * حفظ البيانات إلى التخزين المحلي للمتصفح (localStorage)
+         */
+        function saveAppDataToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                console.log("App data saved successfully to LocalStorage.");
+                return true;
+            } catch (e) {
+                console.error("Error saving to LocalStorage: ", e);
+                customAlert("فشل حفظ البيانات محليًا. قد تكون مساحة التخزين ممتلئة.");
+                return false;
+            }
+        }
+
+        // --- UI & Logic Functions ---
+
+        /**
+         * التحقق مما إذا كان المستخدم قد حفظ بالفعل اليوم
+         */
+        function checkSaveStatus() {
+            const now = new Date();
+            const todayFormatted = formatDate(now);
+            
+            if (appData.lastSavedDate === todayFormatted) {
+                SAVE_BUTTON.disabled = true;
+                SAVE_MESSAGE.innerText = `لقد تم حفظ إنجاز اليوم بتاريخ ${todayFormatted}. سيتفعل زر الحفظ بعد منتصف الليل (00:00).`;
+            } else {
+                SAVE_BUTTON.disabled = false;
+                SAVE_MESSAGE.innerText = '';
+            }
+        }
+
+        function adjustCount(type, delta) {
+            const newValue = currentData[type] + delta;
+            if (newValue >= 0) {
+                currentData[type] = newValue;
+                updateInputUI();
+            }
+        }
+
+        function calculateMaxi(type, value) {
+            const target = TARGETS[type];
+            return value - target; 
+        }
+
+        function updateInputUI() {
+            // تحديث العدادات
+            document.getElementById('quantCount').innerText = currentData.quant;
+            document.getElementById('verbalCount').innerText = currentData.verbal;
+
+            // تحديث معاينة نقاط ماكسي المحلية
+            const qMaxi = calculateMaxi('quant', currentData.quant);
+            const vMaxi = calculateMaxi('verbal', currentData.verbal);
+
+            const updateMaxiDisplay = (el, val) => {
+                el.innerText = val > 0 ? `+${val}` : val;
+                el.className = `text-lg font-bold ${val > 0 ? 'text-green-500' : (val < 0 ? 'text-red-500' : 'text-gray-400')}`;
+            };
+
+            updateMaxiDisplay(document.getElementById('quantMaxi'), qMaxi);
+            updateMaxiDisplay(document.getElementById('verbalMaxi'), vMaxi);
+
+            // تحديث دائرة التقدم اليومي
+            const totalDone = currentData.quant + currentData.verbal;
+            const percent = Math.min(100, Math.round((totalDone / DAILY_TOTAL_TARGET) * 100));
+            
+            const circle = document.getElementById('dailyProgressRing');
+            const radius = circle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            const offset = circumference - (percent / 100) * circumference;
+            
+            circle.style.strokeDashoffset = offset;
+            document.getElementById('dailyPercentage').innerText = `${percent}%`;
+            document.getElementById('todayTotal').innerText = totalDone;
+        }
+
+        function updateUI() {
+            // تحديث إجمالي نقاط ماكسي
+            const totalMaxiEl = document.getElementById('totalMaxiPoints');
+            totalMaxiEl.innerText = appData.totalMaxiPoints;
+            totalMaxiEl.style.color = appData.totalMaxiPoints >= 0 ? '#4ADE80' : '#F87171'; // أخضر أو أحمر
+            
+            // تحديث المجاميع النوعية
+            const updateSpecificTotal = (elId, value, positiveColor, negativeColor) => {
+                const el = document.getElementById(elId);
+                el.innerText = value;
+                el.style.color = value >= 0 ? positiveColor : negativeColor;
+            };
+
+            updateSpecificTotal('totalQuantMaxi', appData.totalQuantMaxi, '#1D4ED8', '#DC2626'); 
+            updateSpecificTotal('totalVerbalMaxi', appData.totalVerbalMaxi, '#7C3AED', '#DC2626'); 
+
+
+            // حساب أيام الراحة
+            const restDays = Math.floor(appData.totalMaxiPoints / DAILY_TOTAL_TARGET);
+            const remainder = appData.totalMaxiPoints % DAILY_TOTAL_TARGET;
+            const restPercent = (remainder / DAILY_TOTAL_TARGET) * 100;
+            const safeRestPercent = Math.max(0, restPercent); 
+
+            document.getElementById('restDaysEarned').innerText = `${Math.max(0, restDays)} يوم`;
+            document.getElementById('restProgress').style.width = `${safeRestPercent}%`;
+
+            // تحديث حالة زر صرف اليوم الكامل
+            const spendBtn = document.getElementById('spendButton');
+            const canSpendFull = restDays >= 1;
+            spendBtn.disabled = !canSpendFull;
+
+            // تحديث حالة أزرار الصرف الجزئي
+            const spendQuantBtn = document.getElementById('spendQuantBtn');
+            const spendVerbalBtn = document.getElementById('spendVerbalBtn');
+            
+            spendQuantBtn.disabled = appData.totalQuantMaxi < TARGETS.quant; 
+            spendVerbalBtn.disabled = appData.totalVerbalMaxi < TARGETS.verbal;
+
+
+            // تحديث الاستريك
+            document.getElementById('streakDisplay').innerText = `${appData.streak} يوم`;
+        }
+
+        async function saveDay() {
+            if (SAVE_BUTTON.disabled) return;
+            
+            const now = new Date();
+            const todayDisplay = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const todayFormatted = formatDate(now);
+            
+            const qMaxi = calculateMaxi('quant', currentData.quant);
+            const vMaxi = calculateMaxi('verbal', currentData.verbal);
+            const dayTotalMaxi = qMaxi + vMaxi;
+
+            // تحديث منطق الاستريك
+            let isConsecutive = false;
+            if (appData.lastStreakDate) {
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const yesterdayFormatted = formatDate(yesterday);
+                
+                // تحقق مما إذا كان آخر يوم حفظ هو أمس
+                if (appData.lastStreakDate === yesterdayFormatted) {
+                    isConsecutive = true;
+                }
+            }
+
+            if (isConsecutive || appData.streak === 0) { 
+                appData.streak += 1;
+            } else { 
+                // إذا لم يكن أمس، يبدأ الاستريك من 1
+                appData.streak = 1; 
+            }
+            appData.lastStreakDate = todayFormatted;
+
+            // تحديث البيانات الإجمالية
+            appData.totalMaxiPoints += dayTotalMaxi;
+            appData.totalQuantMaxi += qMaxi; 
+            appData.totalVerbalMaxi += vMaxi; 
+            
+            // إضافة إلى السجل
+            const entry = {
+                date: todayDisplay,
+                quant: currentData.quant,
+                verbal: currentData.verbal,
+                points: dayTotalMaxi,
+                type: 'EARN' 
+            };
+            appData.history.unshift(entry); 
+            appData.lastSavedDate = todayFormatted;
+
+            // حفظ إلى LocalStorage
+            const success = saveAppDataToLocalStorage();
+
+            if (success) {
+                // إعادة تعيين المدخلات وتحديث الواجهة
+                currentData = { quant: 0, verbal: 0 };
+                updateInputUI();
+                checkSaveStatus();
+                renderHistory();
+                updateUI();
+                customAlert(`تم حفظ إنجاز اليوم!\nرصيدك تغير بمقدار: ${dayTotalMaxi > 0 ? '+' : ''}${dayTotalMaxi} نقطة.\nالاستريك الحالي: ${appData.streak} يوم.`);
+            }
+        }
+
+        // دالة صرف يوم راحة كامل
+        async function spendRestDay() {
+            const COST = DAILY_TOTAL_TARGET; // 9 نقاط
+            const restDays = Math.floor(appData.totalMaxiPoints / COST);
+            
+            if (restDays < 1) {
+                customAlert(`لا يوجد يوم راحة جاهز للصرف!\nيجب أن يكون رصيدك ${COST} نقاط على الأقل. رصيدك الحالي هو ${appData.totalMaxiPoints} نقطة.`);
+                return;
+            }
+            
+            customConfirm(`هل أنت متأكد من صرف يوم راحة كامل؟ سيتم خصم ${COST} نقاط من رصيدك الإجمالي.`, async (confirmed) => {
+                if (confirmed) {
+                    appData.totalMaxiPoints -= COST;
+                    
+                    // تسجيل الصرف في السجل
+                    const now = new Date();
+                    const todayDisplay = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    const entry = {
+                        date: todayDisplay,
+                        quant: 0,
+                        verbal: 0,
+                        points: -COST,
+                        type: 'SPEND', 
+                        note: 'صرف يوم راحة كامل'
+                    };
+                    appData.history.unshift(entry);
+
+                    const success = saveAppDataToLocalStorage();
+                    if (success) {
+                        updateUI();
+                        renderHistory();
+                        customAlert(`تم صرف يوم راحة كامل بنجاح! تم خصم ${COST} نقاط.`);
+                    }
+                }
+            });
+        }
+        
+        // دالة صرف يوم راحة جزئي (بدون كمي أو لفظي)
+        async function spendPartialDay(type) {
+            const cost = TARGETS[type];
+            const sectionName = type === 'quant' ? 'كمي' : 'لفظي';
+            
+            const totalSpecificMaxi = type === 'quant' ? appData.totalQuantMaxi : appData.totalVerbalMaxi;
+
+            if (totalSpecificMaxi < cost) {
+                customAlert(`لا يوجد رصيد كافٍ في بنك ${sectionName} لصرف يوم راحة. التكلفة ${cost} نقاط ورصيدك الحالي في بنك ${sectionName} هو ${totalSpecificMaxi} نقطة.`);
+                return;
+            }
+
+            customConfirm(`هل أنت متأكد من صرف يوم راحة بدون ${sectionName}؟ سيتم خصم ${cost} نقاط من رصيدك الإجمالي ومن بنك ${sectionName}.`, async (confirmed) => {
+                if (confirmed) {
+                    // الخصم من الإجمالي العام
+                    appData.totalMaxiPoints -= cost;
+
+                    // الخصم من إجمالي القسم المحدد
+                    if (type === 'quant') {
+                        appData.totalQuantMaxi -= cost;
+                    } else {
+                        appData.totalVerbalMaxi -= cost;
+                    }
+
+                    // تسجيل الصرف في السجل
+                    const now = new Date();
+                    const todayDisplay = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    const entry = {
+                        date: todayDisplay,
+                        quant: type === 'quant' ? 0 : '-', 
+                        verbal: type === 'verbal' ? 0 : '-',
+                        points: -cost,
+                        type: 'PARTIAL_SPEND',
+                        section: sectionName,
+                        note: `صرف راحة بدون ${sectionName}`
+                    };
+                    appData.history.unshift(entry);
+
+                    const success = saveAppDataToLocalStorage();
+                    if (success) {
+                        updateUI();
+                        renderHistory();
+                        customAlert(`تم صرف يوم راحة بدون ${sectionName} بنجاح! تم خصم ${cost} نقاط.`);
+                    }
+                }
+            });
+        }
+
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+
+            if (appData.history.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 py-4">لا توجد سجلات سابقة</p>';
+                return;
+            }
+
+            appData.history.forEach(item => {
+                const div = document.createElement('div');
+                let pointClass, pointSign;
+
+                if (item.type === 'SPEND') {
+                    // عرض صرف يوم كامل
+                    div.className = 'flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-200';
+                    pointClass = 'text-green-800 bg-green-100';
+                    pointSign = ''; 
+                    
+                    div.innerHTML = `
+                        <div>
+                            <p class="text-sm font-bold text-green-700">${item.date}</p>
+                            <p class="text-xs text-green-500 flex items-center gap-1"><i class="fas fa-bed"></i> ${item.note}</p>
+                        </div>
+                        <div class="${pointClass} px-3 py-1 rounded-full font-bold text-sm">
+                            ${item.points} MAXI
+                        </div>
+                    `;
+                } else if (item.type === 'PARTIAL_SPEND') {
+                    // عرض صرف جزئي
+                    div.className = 'flex justify-between items-center bg-yellow-50 p-3 rounded-lg border border-yellow-200';
+                    pointClass = 'text-yellow-800 bg-yellow-100';
+                    pointSign = ''; 
+                    
+                    div.innerHTML = `
+                        <div>
+                            <p class="text-sm font-bold text-yellow-800">${item.date}</p>
+                            <p class="text-xs text-yellow-600 flex items-center gap-1"><i class="fas fa-umbrella-beach"></i> ${item.note}</p>
+                            <p class="text-xs text-gray-500 mt-1">كمي: ${item.quant} | لفظي: ${item.verbal}</p>
+                        </div>
+                        <div class="${pointClass} px-3 py-1 rounded-full font-bold text-sm">
+                            ${item.points} MAXI
+                        </div>
+                    `;
+                } else {
+                    // عرض الكسب/الخسارة اليومية
+                    div.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100';
+                    pointClass = item.points > 0 ? 'text-blue-600 bg-blue-100' : (item.points < 0 ? 'text-red-600 bg-red-100' : 'text-gray-600 bg-gray-200');
+                    pointSign = item.points >= 0 ? '+' : '';
+                    
+                    div.innerHTML = `
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">${item.date}</p>
+                            <p class="text-xs text-gray-500">كمي: ${item.quant} | لفظي: ${item.verbal}</p>
+                        </div>
+                        <div class="${pointClass} px-3 py-1 rounded-full font-bold text-sm">
+                            ${pointSign}${item.points} MAXI
+                        </div>
+                    `;
+                }
+                
+                list.appendChild(div);
+            });
+        }
+
+        async function resetData() {
+            customConfirm("هل أنت متأكد من تصفير جميع البيانات؟ لا يمكن التراجع عن هذا الإجراء. ستفقد النقاط والأيام الإضافية المحفوظة محلياً.", async (confirmed) => {
+                if (confirmed) {
+                    // حذف البيانات من LocalStorage
+                    localStorage.removeItem(STORAGE_KEY);
+
+                    // إعادة تعيين الحالة المحلية إلى الافتراضيات
+                    currentData = { quant: 0, verbal: 0 };
+                    appData = { totalMaxiPoints: 0, totalQuantMaxi: 0, totalVerbalMaxi: 0, history: [], lastSavedDate: null, streak: 0, lastStreakDate: null };
+                    
+                    // تحديث الواجهة
+                    updateInputUI();
+                    updateUI();
+                    renderHistory();
+                    checkSaveStatus();
+                    customAlert("تم تصفير جميع البيانات بنجاح.");
+                }
+            });
+        }
+        
+        /**
+         * دالة التهيئة الرئيسية لبدء التطبيق المحلي
+         */
+        function initApp() {
+            loadAppDataFromLocalStorage();
+            updateInputUI(); 
+            updateUI(); 
+            renderHistory(); 
+            checkSaveStatus();
+            
+            // إعادة فحص حالة الحفظ كل دقيقة لمعالجة الانتقال عند منتصف الليل
+            setInterval(checkSaveStatus, 60000); 
+            console.log("App initialized locally using localStorage.");
+        }
+
+
+        // --- Main Execution ---
+        window.onload = initApp; // بدء التهيئة عند تحميل الصفحة بالكامل
+    </script>
+</body>
+</html>
